@@ -4,21 +4,6 @@ metadata:
   name: fullstack-app
 ---
 # ===========================
-# PVC for MySQL
-# ===========================
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: mysql-pvc
-  namespace: fullstack-app
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
-# ===========================
 # MySQL Deployment & Service
 # ===========================
 apiVersion: apps/v1
@@ -43,7 +28,7 @@ spec:
             - containerPort: 3306
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: root
+              value: root     # ⚠ change this for production
             - name: MYSQL_DATABASE
               value: SDPDP-beta1
           volumeMounts:
@@ -51,8 +36,6 @@ spec:
               mountPath: /var/lib/mysql
       volumes:
         - name: mysql-storage
-          persistentVolumeClaim:
-            claimName: mysql-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -88,18 +71,9 @@ spec:
     spec:
       containers:
         - name: backend
-          image: sdp-cicd-backend-b:latest
+          image: hemanthmoka79/sdp-cicd-backend-b:latest # <-- change this
           ports:
             - containerPort: 7888
-          env:
-            - name: SPRING_DATASOURCE_URL
-              value: jdbc:mysql://mysql-service:3306/SDPDP-beta1
-            - name: SPRING_DATASOURCE_USERNAME
-              value: root
-            - name: SPRING_DATASOURCE_PASSWORD
-              value: root
-            - name: SERVER_PORT
-              value: "7888"   # FIXED
 ---
 apiVersion: v1
 kind: Service
@@ -111,9 +85,9 @@ spec:
     app: backend
   ports:
     - protocol: TCP
-      port: 2222
+      port: 7888
       targetPort: 7888
-      nodePort: 31397
+      nodePort: 30099       # Optional fixed NodePort (range 30000–32767)
   type: NodePort
 ---
 # ===========================
@@ -136,7 +110,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: sdp-cicd-frontend-f:latest
+          image: hemanthmoka79/sdp-cicd-frontend-f:latest  # <-- change this
           ports:
             - containerPort: 80
 ---
@@ -152,5 +126,5 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 80
-      nodePort: 30439
+      nodePort: 30089        # Optional fixed NodePort (range 30000–32767)
   type: NodePort
